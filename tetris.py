@@ -2,7 +2,7 @@ import pygame
 import sys
 import random
 
-# NES-like colors
+# NES-like + new colors
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 CYAN = (88, 248, 252)
@@ -12,6 +12,8 @@ YELLOW = (252, 224, 168)
 GREEN = (0, 168, 0)
 PURPLE = (216, 0, 204)
 RED = (228, 0, 88)
+GREY = (200, 200, 200)
+DARK_GREY = (50, 50, 50)
 
 # Tetrimino shapes
 TETROMINOS = {
@@ -36,18 +38,19 @@ COLORS = {
 }
 
 # Grid size
-CELL = 10
+CELL = 30  # bigger cells
 COLS = 10
 ROWS = 20
-SIDE_WIDTH = 100
-WIDTH = COLS * CELL + SIDE_WIDTH
-HEIGHT = ROWS * CELL
+SIDE_WIDTH = 200
+BORDER = 5
+WIDTH = COLS * CELL + SIDE_WIDTH + BORDER*2
+HEIGHT = ROWS * CELL + BORDER*2
 
 # Init
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
-font = pygame.font.SysFont("Courier", 20)
+font = pygame.font.SysFont("Times New Roman", 24)
 
 # Empty grid
 grid = [[None for _ in range(COLS)] for _ in range(ROWS)]
@@ -99,6 +102,18 @@ def clear_lines():
     grid = new_grid
     score += lines * 100
 
+# Draw block with border
+def draw_block(px, py, color):
+    for dy in range(CELL):
+        for dx in range(CELL):
+            screen.set_at((px+dx, py+dy), color)
+    # draw block border (black outline)
+    for i in range(CELL):
+        screen.set_at((px+i, py), BLACK)
+        screen.set_at((px+i, py+CELL-1), BLACK)
+        screen.set_at((px, py+i), BLACK)
+        screen.set_at((px+CELL-1, py+i), BLACK)
+
 # Game loop
 while True:
     dt = clock.tick(60)
@@ -141,38 +156,38 @@ while True:
                 sys.exit()
 
     # Draw
-    screen.fill(BLACK)
+    screen.fill(GREY)
+
+    # Draw dark grey playfield
+    pygame.draw.rect(screen, DARK_GREY, (BORDER, BORDER, COLS*CELL, ROWS*CELL))
 
     # Draw grid
     for y in range(ROWS):
         for x in range(COLS):
             if grid[y][x]:
-                for dy in range(CELL):
-                    for dx in range(CELL):
-                        screen.set_at((x*CELL+dx, y*CELL+dy), grid[y][x])
+                draw_block(BORDER+x*CELL, BORDER+y*CELL, grid[y][x])
 
     # Draw current piece
     for y, row in enumerate(piece['shape']):
         for x, cell in enumerate(row):
             if cell:
-                for dy in range(CELL):
-                    for dx in range(CELL):
-                        screen.set_at(((piece['x']+x)*CELL+dx, (piece['y']+y)*CELL+dy), piece['color'])
+                draw_block(BORDER+(piece['x']+x)*CELL, BORDER+(piece['y']+y)*CELL, piece['color'])
 
     # Draw next piece preview
     np_shape = next_piece['shape']
     np_color = next_piece['color']
-    np_x = COLS*CELL + 20
-    np_y = 40
+    np_x = COLS*CELL + BORDER + 30
+    np_y = 80
     for y, row in enumerate(np_shape):
         for x, cell in enumerate(row):
             if cell:
-                for dy in range(CELL):
-                    for dx in range(CELL):
-                        screen.set_at((np_x + x*CELL + dx, np_y + y*CELL + dy), np_color)
+                draw_block(np_x + x*CELL, np_y + y*CELL, np_color)
 
     # Draw score
-    score_text = font.render(f"Score: {score}", True, WHITE)
-    screen.blit(score_text, (COLS*CELL + 10, 10))
+    score_text = font.render(f"Score: {score}", True, BLACK)
+    screen.blit(score_text, (COLS*CELL + BORDER + 20, 20))
+
+    # Draw border around playfield
+    pygame.draw.rect(screen, BLACK, (BORDER-2, BORDER-2, COLS*CELL+4, ROWS*CELL+4), 4)
 
     pygame.display.flip()
