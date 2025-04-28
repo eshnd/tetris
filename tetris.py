@@ -69,6 +69,14 @@ fall_time = 0
 fall_speed = 500  # ms
 score = 0
 
+# Track the last time we rotated or moved a piece
+last_move = pygame.time.get_ticks()
+last_rotate = pygame.time.get_ticks()
+
+# Movement and rotation cooldowns (in milliseconds)
+MOVE_COOLDOWN = 200
+ROTATE_COOLDOWN = 200
+
 def rotate(shape):
     return [ [shape[y][x] for y in range(len(shape))][::-1] for x in range(len(shape[0])) ]
 
@@ -119,27 +127,38 @@ while True:
     dt = clock.tick(60)
     fall_time += dt
 
+    # Handle events
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
 
-    # Controls
+    # Key state for movement and rotation with cooldown
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_LEFT]:
+
+    # Move piece left/right or rotate
+    current_time = pygame.time.get_ticks()
+
+    if keys[pygame.K_LEFT] and current_time - last_move > MOVE_COOLDOWN:
         if valid(piece['x']-1, piece['y'], piece['shape']):
             piece['x'] -= 1
-    if keys[pygame.K_RIGHT]:
+            last_move = current_time
+
+    if keys[pygame.K_RIGHT] and current_time - last_move > MOVE_COOLDOWN:
         if valid(piece['x']+1, piece['y'], piece['shape']):
             piece['x'] += 1
+            last_move = current_time
+
+    if keys[pygame.K_UP] and current_time - last_rotate > ROTATE_COOLDOWN:
+        r = rotate(piece['shape'])
+        if valid(piece['x'], piece['y'], r):
+            piece['shape'] = r
+            last_rotate = current_time
+
     if keys[pygame.K_DOWN]:
         if valid(piece['x'], piece['y']+1, piece['shape']):
             piece['y'] += 1
             fall_time = 0
-    if keys[pygame.K_UP]:
-        r = rotate(piece['shape'])
-        if valid(piece['x'], piece['y'], r):
-            piece['shape'] = r
 
     # Piece falling
     if fall_time > fall_speed:
