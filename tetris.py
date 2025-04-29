@@ -2,7 +2,6 @@ import pygame
 import sys
 import random
 
-# NES-like + new colors
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 CYAN = (88, 248, 252)
@@ -15,7 +14,6 @@ RED = (228, 0, 88)
 GREY = (200, 200, 200)
 DARK_GREY = (50, 50, 50)
 
-# Tetrimino shapes
 TETROMINOS = {
     'I': [[1, 1, 1, 1]],
     'O': [[1, 1], [1, 1]],
@@ -26,7 +24,6 @@ TETROMINOS = {
     'L': [[0,0,1],[1,1,1]]
 }
 
-# Map piece to color
 COLORS = {
     'I': CYAN,
     'O': YELLOW,
@@ -37,8 +34,7 @@ COLORS = {
     'L': ORANGE
 }
 
-# Grid size
-CELL = 30  # bigger cells
+CELL = 30
 COLS = 10
 ROWS = 20
 SIDE_WIDTH = 200
@@ -46,16 +42,14 @@ BORDER = 5
 WIDTH = COLS * CELL + SIDE_WIDTH + BORDER*2
 HEIGHT = ROWS * CELL + BORDER*2
 
-# Init
+
 pygame.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 clock = pygame.time.Clock()
 font = pygame.font.SysFont("Times New Roman", 24)
 
-# Empty grid
 grid = [[None for _ in range(COLS)] for _ in range(ROWS)]
 
-# Current and next piece
 def new_piece():
     kind = random.choice(list(TETROMINOS.keys()))
     shape = TETROMINOS[kind]
@@ -69,11 +63,9 @@ fall_time = 0
 fall_speed = 500  # ms
 score = 0
 
-# Track the last time we rotated or moved a piece
 last_move = pygame.time.get_ticks()
 last_rotate = pygame.time.get_ticks()
 
-# Movement and rotation cooldowns (in milliseconds)
 MOVE_COOLDOWN = 200
 ROTATE_COOLDOWN = 200
 
@@ -110,33 +102,27 @@ def clear_lines():
     grid = new_grid
     score += lines * 100
 
-# Draw block with border
 def draw_block(px, py, color):
     for dy in range(CELL):
         for dx in range(CELL):
             screen.set_at((px+dx, py+dy), color)
-    # draw block border (black outline)
     for i in range(CELL):
         screen.set_at((px+i, py), BLACK)
         screen.set_at((px+i, py+CELL-1), BLACK)
         screen.set_at((px, py+i), BLACK)
         screen.set_at((px+CELL-1, py+i), BLACK)
 
-# Game loop
 while True:
     dt = clock.tick(60)
     fall_time += dt
 
-    # Handle events
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
             sys.exit()
 
-    # Key state for movement and rotation with cooldown
     keys = pygame.key.get_pressed()
 
-    # Move piece left/right or rotate
     current_time = pygame.time.get_ticks()
 
     if keys[pygame.K_LEFT] and current_time - last_move > MOVE_COOLDOWN:
@@ -160,7 +146,6 @@ while True:
             piece['y'] += 1
             fall_time = 0
 
-    # Piece falling
     if fall_time > fall_speed:
         fall_time = 0
         if valid(piece['x'], piece['y']+1, piece['shape']):
@@ -174,25 +159,18 @@ while True:
                 pygame.quit()
                 sys.exit()
 
-    # Draw
     screen.fill(GREY)
 
-    # Draw dark grey playfield
     pygame.draw.rect(screen, DARK_GREY, (BORDER, BORDER, COLS*CELL, ROWS*CELL))
 
-    # Draw grid
     for y in range(ROWS):
         for x in range(COLS):
             if grid[y][x]:
                 draw_block(BORDER+x*CELL, BORDER+y*CELL, grid[y][x])
-
-    # Draw current piece
     for y, row in enumerate(piece['shape']):
         for x, cell in enumerate(row):
             if cell:
                 draw_block(BORDER+(piece['x']+x)*CELL, BORDER+(piece['y']+y)*CELL, piece['color'])
-
-    # Draw next piece preview
     np_shape = next_piece['shape']
     np_color = next_piece['color']
     np_x = COLS*CELL + BORDER + 30
@@ -202,11 +180,9 @@ while True:
             if cell:
                 draw_block(np_x + x*CELL, np_y + y*CELL, np_color)
 
-    # Draw score
     score_text = font.render(f"Score: {score}", True, BLACK)
     screen.blit(score_text, (COLS*CELL + BORDER + 20, 20))
 
-    # Draw border around playfield
     pygame.draw.rect(screen, BLACK, (BORDER-2, BORDER-2, COLS*CELL+4, ROWS*CELL+4), 4)
 
     pygame.display.flip()
